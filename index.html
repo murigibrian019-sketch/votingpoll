@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matatu Art Awards: vote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--asphalt:#15130f;--panel:#201d18;--yellow:#f4b400;--red:#d6352b;--text:#ece9e2;--muted:#a09a8d;--line:#3a352c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--asphalt);color:var(--text);font:16px/1.5 "Work Sans",system-ui,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px 56px}
+.hazard{height:14px;background:repeating-linear-gradient(-45deg,var(--red) 0 14px,var(--yellow) 14px 28px)}
+h1{font:400 clamp(2.4rem,9vw,4rem)/1 Anton,Impact,sans-serif;margin:32px 0 8px;letter-spacing:.01em}
+.lede{color:var(--muted);margin:0 0 28px;max-width:46ch}
+#banner{display:none;margin:0 0 20px;padding:12px 14px;border-left:4px solid var(--yellow);background:var(--panel)}
+#banner.err{border-color:var(--red)}
+ol{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:36px 56px 1fr auto;gap:14px;align-items:center;padding:16px 0;border-top:1px solid var(--line)}
+.rank{font:400 1.6rem Anton,Impact,sans-serif;color:var(--yellow)}
+.thumb{width:56px;height:56px;border-radius:4px;background:var(--panel);object-fit:cover;display:grid;place-items:center;font:400 1.3rem Anton,Impact,sans-serif;color:var(--muted)}
+.name{font-weight:600}
+.desc{color:var(--muted);font-size:.9rem}
+.bar{height:4px;margin-top:8px;background:var(--line)}
+.bar i{display:block;height:100%;background:var(--yellow)}
+.side{text-align:right}
+.count{font:400 1.4rem Anton,Impact,sans-serif}
+button{font:inherit;cursor:pointer}
+.vote{margin-top:4px;padding:8px 16px;border:0;border-radius:3px;background:var(--yellow);color:#15130f;font-weight:600}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #fff;outline-offset:2px}
+dialog{width:min(440px,92vw);padding:0;border:0;border-radius:6px;background:var(--panel);color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+form{padding:22px}
+h2{font:400 1.8rem Anton,Impact,sans-serif;margin:0 0 4px}
+label,legend{display:block;margin:16px 0 6px;font-weight:600;font-size:.9rem}
+fieldset{border:0;padding:0;margin:0}
+input[type=text],input[type=email],input[type=tel],input[type=number]{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;background:var(--asphalt);color:var(--text);font:inherit}
+.stepper{display:flex;gap:8px}
+.stepper button{width:44px;border:1px solid var(--line);background:var(--asphalt);color:var(--text);border-radius:3px;font-size:1.2rem}
+.stepper input{text-align:center}
+.methods{display:flex;gap:8px}
+.methods label{flex:1;margin:0;font-weight:400}
+.methods input{position:absolute;opacity:0}
+.methods span{display:block;padding:10px;text-align:center;border:1px solid var(--line);border-radius:3px;cursor:pointer}
+.methods input:checked+span{border-color:var(--yellow);background:#2c2616;font-weight:600}
+.methods input:focus-visible+span{outline:3px solid #fff}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin:20px 0 14px;font-weight:600}
+.total b{font:400 1.7rem Anton,Impact,sans-serif;color:var(--yellow)}
+.actions{display:flex;gap:10px}
+.actions .vote{flex:1;margin:0;padding:12px}
+.actions .vote:disabled{opacity:.5;cursor:default}
+.ghost{padding:12px 16px;border:1px solid var(--line);border-radius:3px;background:none;color:var(--text)}
+#msg{min-height:1.5em;margin:14px 0 0;font-size:.95rem}
+#msg.err{color:#ff8a80}
+.hide{display:none}
+@media (max-width:480px){.row{grid-template-columns:28px 1fr auto}.thumb{display:none}}
+</style>
+</head>
+<body>
+<div class="hazard"></div>
+<main class="wrap">
+  <h1>Matatu Art Awards</h1>
+  <p class="lede">Pick the ride you want to win. Every vote costs <span id="price">10</span> KES and is counted as soon as your payment clears.</p>
+  <p id="banner" role="status"></p>
+  <ol id="board"></ol>
+</main>
+
+<dialog id="pay" aria-labelledby="payTitle">
+  <form id="form">
+    <h2 id="payTitle">Vote</h2>
+    <p id="payFor" class="desc"></p>
+
+    <label for="votes">Number of votes</label>
+    <div class="stepper">
+      <button type="button" id="minus" aria-label="Fewer votes">−</button>
+      <input id="votes" type="number" min="1" max="1000" value="5" inputmode="numeric">
+      <button type="button" id="plus" aria-label="More votes">+</button>
+    </div>
+
+    <fieldset>
+      <legend>Pay with</legend>
+      <div class="methods">
+        <label><input type="radio" name="method" value="mpesa" checked><span>M-Pesa</span></label>
+        <label><input type="radio" name="method" value="card"><span>Card or bank</span></label>
+      </div>
+    </fieldset>
+
+    <div id="mpesaField">
+      <label for="phone">M-Pesa phone number</label>
+      <input id="phone" type="tel" placeholder="0712 345 678" autocomplete="tel">
+    </div>
+    <div id="cardField" class="hide">
+      <label for="email">Email for your receipt</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
+    </div>
+
+    <div class="total"><span>Total</span><b id="total">KES 50</b></div>
+    <div class="actions">
+      <button class="vote" id="go" type="submit">Pay and vote</button>
+      <button class="ghost" id="close" type="button">Close</button>
+    </div>
+    <p id="msg" role="status"></p>
+  </form>
+</dialog>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let price = 10, selected = null;
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+async function load() {
+  const d = await (await fetch('/api/contestants')).json();
+  price = d.price;
+  $('#price').textContent = price;
+  const max = Math.max(1, ...d.contestants.map((c) => c.votes));
+  const board = $('#board');
+  board.replaceChildren();
+  d.contestants.forEach((c, i) => {
+    const li = el('li', 'row');
+    li.append(el('span', 'rank', i + 1));
+    if (c.image_url) {
+      const img = el('img', 'thumb'); img.src = c.image_url; img.alt = c.name; li.append(img);
+    } else li.append(el('div', 'thumb', c.name.slice(0, 1)));
+    const info = el('div');
+    info.append(el('div', 'name', c.name), el('div', 'desc', c.description));
+    const bar = el('div', 'bar'), fill = el('i'); fill.style.width = (c.votes / max * 100) + '%'; bar.append(fill);
+    info.append(bar);
+    const side = el('div', 'side');
+    const btn = el('button', 'vote', 'Vote');
+    btn.onclick = () => openPay(c);
+    side.append(el('div', 'count', c.votes.toLocaleString()), btn);
+    li.append(info, side);
+    board.append(li);
+  });
+}
+
+function say(node, text, err) { node.textContent = text; node.classList.toggle('err', !!err); }
+const method = () => document.querySelector('input[name=method]:checked').value;
+
+function refreshForm() {
+  const v = Math.min(1000, Math.max(1, parseInt($('#votes').value, 10) || 1));
+  $('#total').textContent = 'KES ' + (v * price).toLocaleString();
+  $('#mpesaField').classList.toggle('hide', method() !== 'mpesa');
+  $('#cardField').classList.toggle('hide', method() !== 'card');
+}
+function openPay(c) {
+  selected = c;
+  $('#payTitle').textContent = 'Vote for ' + c.name;
+  $('#payFor').textContent = c.description;
+  say($('#msg'), '');
+  $('#go').disabled = false;
+  refreshForm();
+  $('#pay').showModal();
+}
+$('#minus').onclick = () => { $('#votes').value = Math.max(1, (+$('#votes').value || 1) - 1); refreshForm(); };
+$('#plus').onclick = () => { $('#votes').value = Math.min(1000, (+$('#votes').value || 1) + 1); refreshForm(); };
+$('#votes').oninput = refreshForm;
+document.querySelectorAll('input[name=method]').forEach((r) => (r.onchange = refreshForm));
+$('#close').onclick = () => $('#pay').close();
+
+async function poll(ref, out, done, tries = 0) {
+  const d = await (await fetch('/api/pay/status/' + ref)).json();
+  if (d.status === 'paid') { say(out, `Payment received. ${d.votes} vote(s) counted.`); load(); return done(); }
+  if (d.status === 'failed') { say(out, 'The payment was not completed. No votes were added.', true); return done(); }
+  if (tries > 40) { say(out, 'Still waiting for confirmation. If you paid, your votes will appear shortly.'); return done(); }
+  setTimeout(() => poll(ref, out, done, tries + 1), 3000);
+}
+
+$('#form').onsubmit = async (e) => {
+  e.preventDefault();
+  const body = { contestantId: selected.id, votes: +$('#votes').value };
+  const m = method();
+  if (m === 'mpesa') body.phone = $('#phone').value; else body.email = $('#email').value;
+  $('#go').disabled = true;
+  say($('#msg'), 'Starting payment...');
+  try {
+    const r = await fetch(m === 'mpesa' ? '/api/pay/mpesa' : '/api/pay/card', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    if (d.redirectUrl) { location.href = d.redirectUrl; return; }
+    say($('#msg'), 'Check your phone and enter your M-Pesa PIN to confirm.');
+    poll(d.ref, $('#msg'), () => ($('#go').disabled = false));
+  } catch (err) {
+    say($('#msg'), err.message, true);
+    $('#go').disabled = false;
+  }
+};
+
+// Returning from the Pesapal hosted checkout
+const back = new URLSearchParams(location.search).get('OrderMerchantReference');
+if (back) {
+  const b = $('#banner'); b.style.display = 'block';
+  say(b, 'Confirming your payment...');
+  poll(back, b, () => history.replaceState(null, '', '/'));
+}
+
+load();
+setInterval(load, 20000);
+</script>
+</body>
+</html>
